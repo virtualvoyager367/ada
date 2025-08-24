@@ -2118,40 +2118,162 @@
 
         chatFileInput.value = '';
 
-        // Check if response contains streaming JSON data by examining the content
-        const responseText = await res.text();
-        console.log('Raw response:', responseText);
+        // Check response content type first to determine how to handle it
+        const contentType = res.headers.get('content-type') || '';
+        console.log('Response content type:', contentType);
         
-        // Check if the response looks like streaming JSON (contains multiple JSON objects on separate lines)
-        if (responseText.includes('"type":"item"') && responseText.includes('"content"')) {
-          // Handle streaming response format
-          let fullResponse = '';
+        // Check if it's likely a binary image response
+        if (contentType.startsWith('image/')) {
+          console.log('Binary image response detected - processing as binary');
+          const responseBuffer = await res.arrayBuffer();
+          const responseArray = new Uint8Array(responseBuffer);
           
-          // Parse each line as JSON to properly handle escaping
-          const lines = responseText.split('\n').filter(line => line.trim());
+          // Check if response contains binary data (PNG, JPEG, etc.)
+          const binaryPatterns = {
+            png: [0x89, 0x50, 0x4E, 0x47], // PNG header
+            jpeg: [0xFF, 0xD8, 0xFF], // JPEG header
+            gif: [0x47, 0x49, 0x46, 0x38], // GIF header
+            webp: [0x52, 0x49, 0x46, 0x46], // WebP header (RIFF)
+            bmp: [0x42, 0x4D] // BMP header
+          };
           
-          for (const line of lines) {
-            try {
-              const jsonObj = JSON.parse(line);
-              if (jsonObj.type === 'item' && jsonObj.content) {
-                fullResponse += jsonObj.content;
-                console.log('Added content:', jsonObj.content);
-              }
-            } catch (e) {
-              // If JSON parsing fails, try regex fallback
-              const match = line.match(/"content":"([^"]*)"/);
-              if (match && match[1]) {
-                const unescapedContent = match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-                fullResponse += unescapedContent;
-                console.log('Added fallback content:', unescapedContent);
+          let isBinaryImage = false;
+          let imageType = null;
+          
+          console.log('Checking for binary image data...');
+          console.log('Response array length:', responseArray.length);
+          
+          // Check for binary image data by comparing first few bytes
+          for (const [type, pattern] of Object.entries(binaryPatterns)) {
+            if (responseArray.length >= pattern.length) {
+              const matches = pattern.every((byte, index) => responseArray[index] === byte);
+              if (matches) {
+                isBinaryImage = true;
+                imageType = type;
+                console.log(`Binary image detected: ${type}`);
+                break;
               }
             }
           }
           
-          console.log('Final full response:', fullResponse);
+          if (isBinaryImage && imageType) {
+            // Create blob directly from the ArrayBuffer
+            const blob = new Blob([responseBuffer], { type: `image/${imageType}` });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Create a file-like object for the image display
+            const imageFile = {
+              name: `ai_generated_image.${imageType}`,
+              type: `image/${imageType}`,
+              _blobUrl: blobUrl,
+              _blob: blob // Pass the actual blob for base64 conversion
+            };
+            
+            // Display the binary image using a special AI image display function
+            addAIImageMessage(imageFile, { renderOnly: false });
+            setOnline();
+            // Clear file previews on successful response
+            clearFilePreviews();
+            setThinking(false);
+            return; // Exit early since we've handled the binary response
+          }
+        }
+        
+        // If not binary image, read as text to check for iframe content
+        const responseText = await res.text();
+        console.log('Raw response:', responseText);
+        console.log('Response length:', responseText.length);
+        console.log('Contains iframe tag:', responseText.includes('<iframe'));
+        console.log('Contains srcdoc attribute:', responseText.includes('srcdoc='));
+        
+        // Check if response contains iframe content
+        if (responseText.includes('<iframe') && responseText.includes('srcdoc=')) {
+          console.log('Response contains iframe - processing iframe content');
+          
+          // Extract the iframe content
+          const iframeMatch = responseText.match(/<iframe[^>]*srcdoc=["']([^"']+)["']/i);
+          console.log('Iframe regex match result:', iframeMatch);
+          if (iframeMatch) {
+            const iframeContent = iframeMatch[1];
+            console.log('Extracted iframe content:', iframeContent);
+            console.log('Iframe content length:', iframeContent.length);
+            
+            // Display the iframe response with streaming typing effect
+            if (iframeContent.trim()) {
+              // Create a temporary message div for the streaming effect
+              const tempMsgDiv = document.createElement('div');
+              tempMsgDiv.className = 'message ada';
+              tempMsgDiv.innerHTML = '<div class="markdown">';
+              tempMsgDiv.style.opacity = '0';
+              tempMsgDiv.style.transform = 'translateY(20px)';
+              messagesDiv.appendChild(tempMsgDiv);
+              
+              // Animate the message appearing
+              setTimeout(() => {
+                tempMsgDiv.style.opacity = '1';
+                tempMsgDiv.style.transform = 'none';
+              }, 10);
+              
+              // Type out the response character by character
+              let currentText = '';
+              const finalText = iframeContent.trim().replace(/\n+$/, ''); // Remove trailing newlines
+              const typingSpeed = 5; // milliseconds per character - super fast like ChatGPT
+              
+              const typeWriter = () => {
+                if (currentText.length < finalText.length) {
+                  currentText += finalText[currentText.length];
+                  tempMsgDiv.querySelector('.markdown').innerHTML = marked.parse(currentText);
+                  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                  setTimeout(typeWriter, typingSpeed);
+                }
+                // No completion effect - just finish typing
+              };
+              
+              // Start the typing effect
+              typeWriter();
+              
+              // Add the message to the messages array for persistence
+              messages.push({ text: finalText, isUser: false, timestamp: Date.now() });
+              // Update conversation data
+              if (typeof conversations !== 'undefined' && conversations[currentConversationId]) {
+                conversations[currentConversationId].messages = [...messages];
+                conversations[currentConversationId].timestamp = Date.now();
+                saveConversations();
+              }
+              saveSessionData && saveSessionData();
+              
+            } else {
+              console.log('Iframe content is empty');
+              addMessage('[No response]', false);
+            }
+          } else {
+            console.log('Failed to extract iframe content from response');
+            addMessage('[Error: Could not parse iframe response]', false);
+          }
+        } else {
+          console.log('Processing non-iframe text response');
+          // Process the text response with streaming typing effect
+          const adaText = responseText;
+          console.log('Non-iframe response detected - processing as regular text');
+          console.log('Raw non-iframe response:', adaText);
+          
+          // Process the text response
+          let displayText = adaText.trim();
+          
+          // Use DOM to decode HTML entities and strip tags
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = displayText;
+          displayText = tempDiv.textContent || tempDiv.innerText || '';
+          displayText = displayText.trim();
+          
+          // Remove trailing newlines from AI response
+          displayText = displayText.replace(/\n+$/, '');
+          
+          // Debug: log the processed displayText
+          console.log('Processed non-iframe AI message:', displayText);
           
           // Display the response with streaming typing effect
-          if (fullResponse.trim()) {
+          if (displayText.trim()) {
             // Create a temporary message div for the streaming effect
             const tempMsgDiv = document.createElement('div');
             tempMsgDiv.className = 'message ada';
@@ -2168,7 +2290,7 @@
             
             // Type out the response character by character
             let currentText = '';
-            const finalText = fullResponse.trim().replace(/\n+$/, ''); // Remove trailing newlines
+            const finalText = displayText.trim().replace(/\n+$/, ''); // Remove trailing newlines
             const typingSpeed = 5; // milliseconds per character - super fast like ChatGPT
             
             const typeWriter = () => {
@@ -2197,99 +2319,13 @@
           } else {
             addMessage('[No response]', false);
           }
-        } else {
-          // Handle regular response (binary images, etc.)
-          const responseBuffer = await res.arrayBuffer();
-          const responseArray = new Uint8Array(responseBuffer);
-          
-          // Check if response contains binary data (PNG, JPEG, etc.)
-          const binaryPatterns = {
-            png: [0x89, 0x50, 0x4E, 0x47], // PNG header
-            jpeg: [0xFF, 0xD8, 0xFF], // JPEG header
-            gif: [0x47, 0x49, 0x46, 0x38], // GIF header
-            webp: [0x52, 0x49, 0x46, 0x46], // WebP header (RIFF)
-            bmp: [0x42, 0x4D] // BMP header
-          };
-          
-          let isBinaryImage = false;
-          let imageType = null;
-          
-          // Check for binary image data by comparing first few bytes
-          for (const [type, pattern] of Object.entries(binaryPatterns)) {
-            if (responseArray.length >= pattern.length) {
-              const matches = pattern.every((byte, index) => responseArray[index] === byte);
-              if (matches) {
-                isBinaryImage = true;
-                imageType = type;
-                break;
-              }
-            }
-          }
-          
-          if (isBinaryImage && imageType) {
-            // Create blob directly from the ArrayBuffer
-            const blob = new Blob([responseBuffer], { type: `image/${imageType}` });
-            const blobUrl = URL.createObjectURL(blob);
-            
-            // Create a file-like object for the image display
-            const imageFile = {
-              name: `ai_generated_image.${imageType}`,
-              type: `image/${imageType}`,
-              _blobUrl: blobUrl,
-              _blob: blob // Pass the actual blob for base64 conversion
-            };
-            
-            // Display the binary image using a special AI image display function
-            addAIImageMessage(imageFile, { renderOnly: false });
-            setOnline();
-            // Clear file previews on successful response
-            clearFilePreviews();
-            setThinking(false);
-            return; // Exit early since we've handled the binary response
-          }
-          
-          // If not binary, convert ArrayBuffer to text for normal processing
-          const adaText = new TextDecoder().decode(responseBuffer);
-          
-          // Extract text from <iframe srcdoc=...> if present
-          let displayText = adaText.trim();
-          // Use DOM to extract srcdoc if present
-          if (displayText.startsWith('<iframe')) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = displayText;
-            const iframe = tempDiv.querySelector('iframe');
-            if (iframe && iframe.hasAttribute('srcdoc')) {
-              displayText = iframe.getAttribute('srcdoc');
-            }
-          } else {
-            // Use DOM to decode HTML entities and strip tags
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = displayText;
-            displayText = tempDiv.textContent || tempDiv.innerText || '';
-            displayText = displayText.trim();
-          }
-          
-          // Remove trailing newlines from AI response
-          displayText = displayText.replace(/\n+$/, '');
-          
-          // Debug: log the processed displayText
-          console.log('Processed AI message:', displayText);
 
           // If backend returns a file URL, show a download link
           const urlMatch = displayText.match(/(https?:\/\/\S+\.(?:pdf|docx?|xlsx?|png|jpe?g|gif|txt|csv|zip|rar|mp3|mp4|wav|webm|json|xml|pptx?))/i);
           if (urlMatch) {
-            addMessage(`📎 <a href="${urlMatch[1]}" target="_blank" rel="noopener">Download file</a>`, false);
-            // Remove the URL from the main message if present
-            displayText = displayText.replace(urlMatch[1], '').trim();
-          }
-          if (displayText) {
-            addMessage(displayText || '[No response]', false);
-            // Update conversation data for non-streaming responses
-            if (typeof conversations !== 'undefined' && conversations[currentConversationId]) {
-              conversations[currentConversationId].messages = [...messages];
-              conversations[currentConversationId].timestamp = Date.now();
-              saveConversations();
-            }
+            // Add download link to the streaming message
+            const downloadLink = `📎 <a href="${urlMatch[1]}" target="_blank" rel="noopener">Download file</a>`;
+            // Note: Download links will appear in the streaming message as it types out
           }
         }
         setOnline();
