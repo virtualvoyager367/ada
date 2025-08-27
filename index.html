@@ -4005,17 +4005,27 @@
           
           if (response.ok) {
             const responseText = await response.text();
+            console.log('Webhook response received:', responseText);
+            console.log('Response length:', responseText.length);
+            console.log('Contains "valid":', responseText.toLowerCase().includes('valid'));
+            console.log('Contains "invalid":', responseText.toLowerCase().includes('invalid'));
             
-            // Check if response contains "valid" wrapped in iframe
-            if (responseText.includes('<iframe') && responseText.includes('valid')) {
+            // Check if response contains "valid" (with or without iframe)
+            if (responseText.toLowerCase().includes('valid')) {
+              console.log('✅ Token validation successful - proceeding with auto-login');
               // Token is valid, proceed with login
               currentUser = savedUser;
               loginToken = savedToken;
+              
+              console.log('Setting currentUser to:', currentUser);
+              console.log('Setting loginToken to:', loginToken ? 'present' : 'null');
               
               // Show main app
               document.getElementById('loginContainer').style.display = 'none';
               document.getElementById('mainApp').style.display = 'block';
               document.getElementById('aiTopbar').style.display = 'flex';
+              
+              console.log('UI elements updated - login should be complete');
               
               // Update profile display
               updateProfileDisplay();
@@ -4025,13 +4035,22 @@
               renderConversationList();
               
               return true;
-            } else if (responseText.includes('<iframe') && responseText.includes('invalid')) {
+            } else if (responseText.toLowerCase().includes('invalid')) {
               // Token is invalid, clear cookies and show login
-              console.log('Login token validation failed - clearing cookies');
+              console.log('❌ Login token validation failed - clearing cookies');
+              deleteCookie('ada_login_token');
+              deleteCookie('ada_current_user');
+              return false;
+            } else {
+              console.log('⚠️ Unexpected webhook response format - clearing cookies');
+              console.log('Response did not contain "valid" or "invalid"');
               deleteCookie('ada_login_token');
               deleteCookie('ada_current_user');
               return false;
             }
+          } else {
+            console.log('❌ Webhook request failed with status:', response.status);
+            return false;
           }
         } catch (error) {
           console.error('Error validating login cookies:', error);
