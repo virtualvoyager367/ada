@@ -4060,8 +4060,9 @@
               // Update profile display
               updateProfileDisplay();
               
-              // Load user-specific conversations
+              // Load user-specific conversations but always start with new chat
               loadConversations();
+              currentConversationId = null; // Force new chat on auto-login
               renderConversationList();
               
               return true;
