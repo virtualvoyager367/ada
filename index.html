@@ -3942,14 +3942,30 @@
       try {
         // Call logout webhook to remove token
         if (loginToken && currentUser) {
-          await fetch('https://n8n.tail851803.ts.net/webhook/08e977e0-f69d-47f7-a801-e03376a1b3b80', {
+          console.log('Sending logout request to webhook...');
+          const response = await fetch('https://n8n.tail851803.ts.net/webhook/116554dc-8786-42d1-81f2-1c970ee8b765', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-              user: currentUser, 
-              token: loginToken 
+              ada_current_user: currentUser, 
+              ada_login_token: loginToken 
             })
           });
+          
+          if (response.ok) {
+            const responseText = await response.text();
+            console.log('Logout webhook response:', responseText);
+            
+            if (responseText.toLowerCase().includes('deleted')) {
+              console.log('✅ Token successfully deleted on server');
+            } else if (responseText.toLowerCase().includes('failed')) {
+              console.log('❌ Failed to delete token on server');
+            } else {
+              console.log('⚠️ Unexpected logout response format');
+            }
+          } else {
+            console.log('❌ Logout webhook request failed with status:', response.status);
+          }
         }
       } catch (error) {
         console.error('Logout webhook error:', error);
