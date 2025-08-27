@@ -2264,10 +2264,15 @@
           // Process the text response
           let displayText = adaText.trim();
           
-          // Use DOM to decode HTML entities and strip tags
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = displayText;
-          displayText = tempDiv.textContent || tempDiv.innerText || '';
+          // Decode HTML entities without using innerHTML to avoid apostrophe issues
+          displayText = displayText
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#x27;/g, "'")
+            .replace(/&#39;/g, "'")
+            .replace(/&apos;/g, "'");
           displayText = displayText.trim();
           
           // Remove trailing newlines from AI response
