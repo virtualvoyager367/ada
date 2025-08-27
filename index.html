@@ -3881,8 +3881,8 @@
         // Save token in cookie only after successful validation
         try {
           console.log('About to save to cookies - username:', username, 'token length:', token ? token.length : 'null');
-          setCookie('ada_login_token', token, 30);
-          setCookie('ada_current_user', username, 30);
+          setCookie('ada_login_token', token, 90);
+          setCookie('ada_current_user', username, 90);
           console.log('Successfully saved login token and user to cookies');
           
           // Verify cookies were saved
