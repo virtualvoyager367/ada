@@ -2578,13 +2578,15 @@
             currentUser = sessionData.currentUser;
             displayName = sessionData.displayName;
             if (sessionData.conversations) {
-              // Load the most recent conversation
-              const conversations = Object.entries(sessionData.conversations);
-              if (conversations.length > 0) {
-                const [latestConvId, latestConv] = conversations.sort((a, b) => b[1].timestamp - a[1].timestamp)[0];
-                conversationId = latestConvId;
-                messages = latestConv.messages;
-                displayMessages();
+              // Don't restore last conversation - always start with new chat
+              // Just load the conversations data but don't switch to any specific conversation
+              conversations = sessionData.conversations;
+              currentConversationId = null;
+              conversationId = null;
+              messages = [];
+              // Update the conversation list to show "New Chat" selected
+              if (typeof renderConversationList === 'function') {
+                renderConversationList();
               }
             }
             return true;
