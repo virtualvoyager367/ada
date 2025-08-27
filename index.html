@@ -3874,9 +3874,15 @@
         
         // Save token in cookie only after successful validation
         try {
+          console.log('About to save to cookies - username:', username, 'token length:', token ? token.length : 'null');
           setCookie('ada_login_token', token, 30);
           setCookie('ada_current_user', username, 30);
           console.log('Successfully saved login token and user to cookies');
+          
+          // Verify cookies were saved
+          const savedToken = getCookie('ada_login_token');
+          const savedUser = getCookie('ada_current_user');
+          console.log('Verification - saved token length:', savedToken ? savedToken.length : 'null', 'saved user:', savedUser);
         } catch (cookieError) {
           console.error('Failed to save login data to cookies:', cookieError);
           // Don't throw here as login was successful, just log the cookie issue
