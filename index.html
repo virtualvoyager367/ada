@@ -3939,9 +3939,14 @@
     
     // Logout function
     async function logout() {
+      console.log('🚪 Logout function called');
+      console.log('Current user:', currentUser);
+      console.log('Login token exists:', loginToken ? 'yes' : 'no');
+      
       try {
         // Call logout webhook to remove token
         if (loginToken && currentUser) {
+          console.log('✅ Both loginToken and currentUser exist - sending webhook request');
           console.log('Sending logout request to webhook...');
           const response = await fetch('https://n8n.tail851803.ts.net/webhook/116554dc-8786-42d1-81f2-1c970ee8b765', {
             method: 'POST',
@@ -3966,6 +3971,10 @@
           } else {
             console.log('❌ Logout webhook request failed with status:', response.status);
           }
+        } else {
+          console.log('❌ Cannot send logout webhook - missing loginToken or currentUser');
+          console.log('loginToken:', loginToken ? 'present' : 'missing');
+          console.log('currentUser:', currentUser ? currentUser : 'missing');
         }
       } catch (error) {
         console.error('Logout webhook error:', error);
