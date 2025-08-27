@@ -3820,10 +3820,16 @@
         
         const loginResult = await loginResponse.text();
         console.log('Login validation result:', loginResult);
+        console.log('Login result length:', loginResult.length);
         
         // Check if login was successful (adjust this based on your webhook response)
         if (loginResult.toLowerCase().includes('invalid') || loginResult.toLowerCase().includes('error') || loginResult.toLowerCase().includes('failed')) {
           throw new Error('Invalid credentials');
+        }
+        
+        // If login result is empty, that might be success for this webhook
+        if (loginResult.length === 0) {
+          console.log('Empty login result - treating as successful validation');
         }
         
         // If login validation successful, get the login token
@@ -3979,27 +3985,60 @@
     }
     
     // Check for existing login on page load
-    function checkExistingLogin() {
+    async function checkExistingLogin() {
       const savedToken = getCookie('ada_login_token');
       const savedUser = getCookie('ada_current_user');
       
       if (savedToken && savedUser) {
-        currentUser = savedUser;
-        loginToken = savedToken;
-        
-        // Show main app
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        document.getElementById('aiTopbar').style.display = 'flex';
-        
-        // Update profile display
-        updateProfileDisplay();
-        
-        // Load user-specific conversations
-        loadConversations();
-        renderConversationList();
-        
-        return true;
+        try {
+          // Validate cookies with webhook
+          const response = await fetch('https://n8n.tail851803.ts.net/webhook/db4d785a-1d4a-46d3-ae4f-648e5e495198', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              ada_current_user: savedUser,
+              ada_login_token: savedToken
+            })
+          });
+          
+          if (response.ok) {
+            const responseText = await response.text();
+            
+            // Check if response contains "valid" wrapped in iframe
+            if (responseText.includes('<iframe') && responseText.includes('valid')) {
+              // Token is valid, proceed with login
+              currentUser = savedUser;
+              loginToken = savedToken;
+              
+              // Show main app
+              document.getElementById('loginContainer').style.display = 'none';
+              document.getElementById('mainApp').style.display = 'block';
+              document.getElementById('aiTopbar').style.display = 'flex';
+              
+              // Update profile display
+              updateProfileDisplay();
+              
+              // Load user-specific conversations
+              loadConversations();
+              renderConversationList();
+              
+              return true;
+            } else if (responseText.includes('<iframe') && responseText.includes('invalid')) {
+              // Token is invalid, clear cookies and show login
+              console.log('Login token validation failed - clearing cookies');
+              deleteCookie('ada_login_token');
+              deleteCookie('ada_current_user');
+              return false;
+            }
+          }
+        } catch (error) {
+          console.error('Error validating login cookies:', error);
+          // On error, clear cookies to be safe
+          deleteCookie('ada_login_token');
+          deleteCookie('ada_current_user');
+        }
       }
       
       return false;
@@ -4031,8 +4070,9 @@
     });
     
     // Initialize login system on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      if (!checkExistingLogin()) {
+    document.addEventListener('DOMContentLoaded', async function() {
+      const loginSuccessful = await checkExistingLogin();
+      if (!loginSuccessful) {
         // Show login form and focus on username
         document.getElementById('loginContainer').style.display = 'flex';
         document.getElementById('mainApp').style.display = 'none';
@@ -4046,7 +4086,7 @@
     
     // Call initialization immediately if DOM is already loaded
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', checkExistingLogin);
+      document.addEventListener('DOMContentLoaded', async () => await checkExistingLogin());
     } else {
       checkExistingLogin();
     }
