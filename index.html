@@ -3828,33 +3828,47 @@
         
         // If login validation successful, get the login token
         console.log('Login validation successful, requesting token...');
-        const tokenResponse = await fetch('https://n8n.tail851803.ts.net/webhook/65ab51f7-4cf3-421e-b8f6-f946a3799beb', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            user: username, 
-            password: password 
-          })
-        });
+        let token = null;
         
-        console.log('Token response status:', tokenResponse.status);
-        
-        if (!tokenResponse.ok) {
-          throw new Error(`Token retrieval failed with status: ${tokenResponse.status}`);
+        try {
+          const tokenResponse = await fetch('https://n8n.tail851803.ts.net/webhook/65ab51f7-4cf3-421e-b8f6-f946a3799beb', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              user: username, 
+              password: password 
+            })
+          });
+          
+          console.log('Token response status:', tokenResponse.status);
+          
+          if (!tokenResponse.ok) {
+            throw new Error(`Token retrieval failed with status: ${tokenResponse.status}. Authentication cannot proceed without a valid security token.`);
+          }
+          
+          let tokenResult = await tokenResponse.text();
+          console.log('Raw token response:', tokenResult);
+          
+          // Filter out iframe content and extract base64 token
+          token = filterIframeContent(tokenResult);
+          console.log('Filtered token:', token);
+          
+          if (!token || token.length < 10) {
+            throw new Error('Invalid or empty token received. Authentication cannot proceed without a valid security token.');
+          }
+          
+        } catch (tokenError) {
+          console.error('Token retrieval error:', tokenError);
+          // Ensure user cannot proceed without a valid token
+          throw new Error(`Security token error: ${tokenError.message || 'Failed to obtain required security token. Login cannot continue.'}`);
         }
         
-        let tokenResult = await tokenResponse.text();
-        console.log('Raw token response:', tokenResult);
-        
-        // Filter out iframe content and extract base64 token
-        const token = filterIframeContent(tokenResult);
-        console.log('Filtered token:', token);
-        
-        if (!token || token.length < 10) {
-          throw new Error('Invalid token received: ' + token);
+        // Only proceed if we have a valid token
+        if (!token) {
+          throw new Error('Critical security error: No valid token available. Login aborted for security reasons.');
         }
         
-        // Store login data
+        // Store login data only after successful token retrieval
         currentUser = username;
         loginToken = token;
         
