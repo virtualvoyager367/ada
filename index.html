@@ -3872,9 +3872,15 @@
         currentUser = username;
         loginToken = token;
         
-        // Save token in cookie
-        setCookie('ada_login_token', token, 30);
-        setCookie('ada_current_user', username, 30);
+        // Save token in cookie only after successful validation
+        try {
+          setCookie('ada_login_token', token, 30);
+          setCookie('ada_current_user', username, 30);
+          console.log('Successfully saved login token and user to cookies');
+        } catch (cookieError) {
+          console.error('Failed to save login data to cookies:', cookieError);
+          // Don't throw here as login was successful, just log the cookie issue
+        }
         
         // Hide login container and show main app
         document.getElementById('loginContainer').style.display = 'none';
