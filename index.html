@@ -2672,17 +2672,13 @@
         updateProfileTopbar();
         // Load conversations for this user
         loadConversations();
-        // If sessionData cookie has a conversation, restore it
-        if (foundConversationId && foundConversations && foundConversations[foundConversationId]) {
-          currentConversationId = foundConversationId;
+        // Always start with new chat on refresh
+        if (foundConversations) {
           conversations = foundConversations;
-          renderConversationList();
-          switchConversation(currentConversationId);
-        } else {
-          currentConversationId = null;
-          renderConversationList();
-          switchConversation(null);
         }
+        currentConversationId = null;
+        renderConversationList();
+        switchConversation(null);
       } else if (loadSessionData()) {
         loginContainer.style.display = 'none';
         mainApp.style.display = '';
