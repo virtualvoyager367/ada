@@ -3940,20 +3940,27 @@
     // Logout function
     async function logout() {
       console.log('🚪 Logout function called');
-      console.log('Current user:', currentUser);
-      console.log('Login token exists:', loginToken ? 'yes' : 'no');
+      
+      // Get current values from cookies before clearing anything
+      const savedToken = getCookie('ada_login_token');
+      const savedUser = getCookie('ada_current_user');
+      
+      console.log('Current user from variable:', currentUser);
+      console.log('Current user from cookie:', savedUser);
+      console.log('Login token from variable exists:', loginToken ? 'yes' : 'no');
+      console.log('Login token from cookie exists:', savedToken ? 'yes' : 'no');
       
       try {
-        // Call logout webhook to remove token
-        if (loginToken && currentUser) {
-          console.log('✅ Both loginToken and currentUser exist - sending webhook request');
+        // Call logout webhook to remove token - use cookie values to ensure we have them
+        if (savedToken && savedUser) {
+          console.log('✅ Both savedToken and savedUser exist - sending webhook request');
           console.log('Sending logout request to webhook...');
           const response = await fetch('https://n8n.tail851803.ts.net/webhook/116554dc-8786-42d1-81f2-1c970ee8b765', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-              ada_current_user: currentUser, 
-              ada_login_token: loginToken 
+              ada_current_user: savedUser, 
+              ada_login_token: savedToken 
             })
           });
           
