@@ -1891,6 +1891,39 @@
       return md;
     }
 
+    // Smart markdown streaming function that renders complete elements immediately
+    function smartMarkdownStream(currentText, finalText) {
+      let processedText = currentText;
+      
+      // Find all complete markdown links in the final text
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+      const allLinks = [];
+      let match;
+      
+      // Collect all complete links from the final text
+      while ((match = linkRegex.exec(finalText)) !== null) {
+        allLinks.push({
+          fullMatch: match[0],
+          text: match[1],
+          url: match[2],
+          startIndex: match.index,
+          endIndex: match.index + match[0].length
+        });
+      }
+      
+      // Process each complete link
+      allLinks.forEach(link => {
+        // Check if this link is complete in the current text
+        if (link.endIndex <= currentText.length) {
+          // Replace the markdown syntax with HTML link
+          processedText = processedText.replace(link.fullMatch, `<a href="${link.url}" target="_blank" rel="noopener">${link.text}</a>`);
+        }
+      });
+      
+      // Use marked.parse for the rest of the markdown processing
+      return marked.parse(processedText);
+    }
+
     // Update addMessage to use Markdown rendering
     function addMessage(message, isUser, opts) {
       const msgDiv = document.createElement('div');
@@ -2226,7 +2259,7 @@
               const typeWriter = () => {
                 if (currentText.length < finalText.length) {
                   currentText += finalText[currentText.length];
-                  tempMsgDiv.querySelector('.markdown').innerHTML = marked.parse(currentText);
+                  tempMsgDiv.querySelector('.markdown').innerHTML = smartMarkdownStream(currentText, finalText);
                   messagesDiv.scrollTop = messagesDiv.scrollHeight;
                   setTimeout(typeWriter, typingSpeed);
                 }
@@ -2305,7 +2338,7 @@
             const typeWriter = () => {
               if (currentText.length < finalText.length) {
                 currentText += finalText[currentText.length];
-                tempMsgDiv.querySelector('.markdown').innerHTML = marked.parse(currentText);
+                tempMsgDiv.querySelector('.markdown').innerHTML = smartMarkdownStream(currentText, finalText);
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 setTimeout(typeWriter, typingSpeed);
               }
