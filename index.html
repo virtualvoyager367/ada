@@ -627,30 +627,6 @@
       font-size: 0.98em;
       margin: 8px 0;
     }
-    
-    /* Style for markdown links */
-    .message .markdown a {
-      color: #4da6ff;
-      text-decoration: underline;
-      text-decoration-color: rgba(77, 166, 255, 0.4);
-      text-underline-offset: 2px;
-      transition: color 0.2s, text-decoration-color 0.2s;
-    }
-    
-    .message .markdown a:hover {
-      color: #7ab8ff;
-      text-decoration-color: rgba(122, 184, 255, 0.7);
-    }
-    
-    .light-mode .message .markdown a {
-      color: #1a73e8;
-      text-decoration-color: rgba(26, 115, 232, 0.4);
-    }
-    
-    .light-mode .message .markdown a:hover {
-      color: #0d5fcc;
-      text-decoration-color: rgba(26, 115, 232, 0.7);
-    }
     .light-mode .message .markdown pre {
       background: #f5f5f5;
       color: #1761a0;
@@ -1917,54 +1893,35 @@
 
     // Smart markdown streaming function that renders complete elements immediately
     function smartMarkdownStream(currentText, finalText) {
-      // First, process any complete markdown links in the current text
-      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
       let processedText = currentText;
       
-      // Process complete links in the current text
+      // Find all complete markdown links in the final text
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+      const allLinks = [];
       let match;
       
-      // Reset the regex lastIndex for proper matching
-      linkRegex.lastIndex = 0;
-      
-      // First pass: find and replace complete links in the current text
-      while ((match = linkRegex.exec(currentText)) !== null) {
-        const [fullMatch, text, url] = match;
-        
-        // Only replace if the match is complete in the current text
-        if (currentText.indexOf(fullMatch) + fullMatch.length <= currentText.length) {
-          // Replace the markdown syntax with HTML link, showing only the link text
-          processedText = processedText.replace(
-            new RegExp('\\[' + text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]\\(' + 
-                      url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\)', 'g'),
-            `<a href="${url}" target="_blank" rel="noopener">${text}</a>`
-          );
-        }
+      // Collect all complete links from the final text
+      while ((match = linkRegex.exec(finalText)) !== null) {
+        allLinks.push({
+          fullMatch: match[0],
+          text: match[1],
+          url: match[2],
+          startIndex: match.index,
+          endIndex: match.index + match[0].length
+        });
       }
       
-      // Process partial links that might be forming
-      const partialLinkRegex = /(\[([^\]]*?)\]\([^)]*?))$/g;
-      
-      // Look for partial links at the end of the current text
-      const partialMatch = partialLinkRegex.exec(currentText);
-      
-      if (partialMatch) {
-        const [partialLink, fullPartial, text, url] = partialMatch;
-        
-        // If we have a partial link at the end, don't process it yet
-        if (currentText.endsWith(partialLink) && !currentText.endsWith(')')) {
-          // Leave the partial link as plain text
-          processedText = processedText.replace(
-            new RegExp(partialLink.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'),
-            partialLink
-          );
+      // Process each complete link
+      allLinks.forEach(link => {
+        // Check if this link is complete in the current text
+        if (link.endIndex <= currentText.length) {
+          // Replace the markdown syntax with HTML link
+          processedText = processedText.replace(link.fullMatch, `<a href="${link.url}" target="_blank" rel="noopener">${link.text}</a>`);
         }
-      }
+      });
       
       // Use marked.parse for the rest of the markdown processing
-      let result = marked.parse(processedText);
-      
-      return result;
+      return marked.parse(processedText);
     }
 
     // Update addMessage to use Markdown rendering
