@@ -1931,7 +1931,15 @@
       if (isUser) {
         msgDiv.textContent = message.trim();
       } else {
-        msgDiv.innerHTML = '<div class="markdown">' + marked.parse(message) + '</div>';
+        // Configure marked to add target and rel attributes to links
+      const renderer = new marked.Renderer();
+      const linkRenderer = renderer.link;
+      renderer.link = function(href, title, text) {
+        const html = linkRenderer.call(renderer, href, title, text);
+        return html.replace(/^<a /, '<a target="_blank" rel="noopener noreferrer" ');
+      };
+      
+      msgDiv.innerHTML = '<div class="markdown">' + marked.parse(message, { renderer }) + '</div>';
         // Inject copy buttons into code blocks
         setTimeout(() => {
           const codeBlocks = msgDiv.querySelectorAll('pre > code');
