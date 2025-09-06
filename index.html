@@ -628,39 +628,28 @@
       margin: 8px 0;
     }
     
-    /* Style for markdown links to make them look like buttons */
-    .message .markdown a.markdown-link {
-      display: inline-block;
-      background-color: #1a73e8;
-      color: white !important;
-      text-decoration: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      margin: 2px 0;
-      font-weight: 500;
-      transition: background-color 0.2s, transform 0.1s;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-      border: none;
-      cursor: pointer;
-      line-height: 1.4;
+    /* Style for markdown links */
+    .message .markdown a {
+      color: #4da6ff;
+      text-decoration: underline;
+      text-decoration-color: rgba(77, 166, 255, 0.4);
+      text-underline-offset: 2px;
+      transition: color 0.2s, text-decoration-color 0.2s;
     }
     
-    .message .markdown a.markdown-link:hover {
-      background-color: #1557b0;
-      transform: translateY(-1px);
+    .message .markdown a:hover {
+      color: #7ab8ff;
+      text-decoration-color: rgba(122, 184, 255, 0.7);
     }
     
-    .message .markdown a.markdown-link:active {
-      transform: translateY(0);
+    .light-mode .message .markdown a {
+      color: #1a73e8;
+      text-decoration-color: rgba(26, 115, 232, 0.4);
     }
     
-    .light-mode .message .markdown a.markdown-link {
-      background-color: #1a73e8;
-      color: white !important;
-    }
-    
-    .light-mode .message .markdown a.markdown-link:hover {
-      background-color: #1557b0;
+    .light-mode .message .markdown a:hover {
+      color: #0d5fcc;
+      text-decoration-color: rgba(26, 115, 232, 0.7);
     }
     .light-mode .message .markdown pre {
       background: #f5f5f5;
@@ -1928,72 +1917,52 @@
 
     // Smart markdown streaming function that renders complete elements immediately
     function smartMarkdownStream(currentText, finalText) {
+      // First, process any complete markdown links in the current text
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
       let processedText = currentText;
       
-      // Find all complete markdown links in the final text
-      const linkRegex = /\[([^\]]*?)\]\(([^)]*?)\)/g;
-      const allLinks = [];
+      // Process complete links in the current text
       let match;
       
       // Reset the regex lastIndex for proper matching
       linkRegex.lastIndex = 0;
       
-      // Collect all complete links from the final text
-      while ((match = linkRegex.exec(finalText)) !== null) {
-        allLinks.push({
-          fullMatch: match[0],
-          text: match[1],
-          url: match[2],
-          startIndex: match.index,
-          endIndex: match.index + match[0].length
-        });
+      // First pass: find and replace complete links in the current text
+      while ((match = linkRegex.exec(currentText)) !== null) {
+        const [fullMatch, text, url] = match;
+        
+        // Only replace if the match is complete in the current text
+        if (currentText.indexOf(fullMatch) + fullMatch.length <= currentText.length) {
+          // Replace the markdown syntax with HTML link, showing only the link text
+          processedText = processedText.replace(
+            new RegExp('\\[' + text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]\\(' + 
+                      url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\)', 'g'),
+            `<a href="${url}" target="_blank" rel="noopener">${text}</a>`
+          );
+        }
       }
       
-      // Process each complete link
-      allLinks.forEach(link => {
-        // Check if this link is complete in the current text
-        if (link.startIndex < currentText.length) {
-          const linkInCurrentText = currentText.substring(link.startIndex, link.endIndex);
-          // Only replace if the link is complete in the current text
-          if (linkInCurrentText === link.fullMatch) {
-            // Replace the markdown syntax with HTML link
-            processedText = processedText.replace(
-              new RegExp(link.fullMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-              `<a href="${link.url}" target="_blank" rel="noopener" class="markdown-link">${link.text}</a>`
-            );
-          }
-        }
-      });
+      // Process partial links that might be forming
+      const partialLinkRegex = /(\[([^\]]*?)\]\([^)]*?))$/g;
       
-      // Process partial links that are still in markdown format
-      const partialLinkRegex = /\[([^\]]*?)\]\(([^)]*?)$/g;
-      let partialMatch;
+      // Look for partial links at the end of the current text
+      const partialMatch = partialLinkRegex.exec(currentText);
       
-      while ((partialMatch = partialLinkRegex.exec(currentText)) !== null) {
-        // If we have a partial link (starts with [ but not complete), leave it as is
-        // This prevents the markdown parser from breaking the link
-        const partialLink = partialMatch[0];
-        const linkText = partialMatch[1] || '';
-        const linkUrl = partialMatch[2] || '';
+      if (partialMatch) {
+        const [partialLink, fullPartial, text, url] = partialMatch;
         
-        // Only process if this isn't already processed
-        if (!processedText.includes(`href="${linkUrl}"`)) {
-          // Replace just the partial match with a temporary span to preserve it
+        // If we have a partial link at the end, don't process it yet
+        if (currentText.endsWith(partialLink) && !currentText.endsWith(')')) {
+          // Leave the partial link as plain text
           processedText = processedText.replace(
-            new RegExp(partialLink.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-            `<span class="partial-link" data-text="${linkText}" data-url="${linkUrl}">${partialLink}</span>`
+            new RegExp(partialLink.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'),
+            partialLink
           );
         }
       }
       
       // Use marked.parse for the rest of the markdown processing
       let result = marked.parse(processedText);
-      
-      // Restore any partial links that were temporarily replaced
-      const tempSpanRegex = /<span class="partial-link" data-text="([^"]*?)" data-url="([^"]*?)">(.*?)<\/span>/g;
-      result = result.replace(tempSpanRegex, (match, text, url) => {
-        return `[${text}](${url}`; // Return the original partial markdown
-      });
       
       return result;
     }
