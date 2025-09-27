@@ -1645,12 +1645,25 @@
     let currentUser = null;
     let loginToken = null;
     
-    // UUID v4 generator (no dependencies)
+    // Cryptographically secure UUID v4 generator
     function uuidv4() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
+      // Generate 16 random bytes using crypto.getRandomValues
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      
+      // Set version (4) and variant bits according to UUID v4 spec
+      array[6] = (array[6] & 0x0f) | 0x40; // Version 4
+      array[8] = (array[8] & 0x3f) | 0x80; // Variant bits
+      
+      // Convert to hex string and format with dashes
+      const hex = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+      return [
+        hex.substring(0, 8),
+        hex.substring(8, 12),
+        hex.substring(12, 16),
+        hex.substring(16, 20),
+        hex.substring(20, 32)
+      ].join('-');
     }
     
     // Helper function to convert data URL to blob
