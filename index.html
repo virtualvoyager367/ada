@@ -2839,7 +2839,11 @@
         const res = await fetch('https://n8n.tail851803.ts.net/webhook/19fc6ca8-b869-40a3-aa4b-ffbc927214d7', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: currentUser, displayName: newDisplayName })
+          body: JSON.stringify({ 
+            user: currentUser, 
+            currentDisplayName: displayName, 
+            newDisplayName: newDisplayName 
+          })
         });
         let result = await res.text();
         // Remove iframe wrapping if present
