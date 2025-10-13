@@ -23,15 +23,16 @@
     .ada-chat-container {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       min-height: 100vh;
       background: #181818;
-      width: 100vw;
+      width: calc(100vw - 240px);
       height: 100vh;
       box-sizing: border-box;
       overflow: hidden;
       margin-top: 0;
       margin-bottom: 0;
+      margin-left: 240px;
       justify-content: flex-end;
       padding-bottom: 8vh; /* Less space at the bottom */
       padding-top: 6vh;   /* Add some space at the top to lift content higher */
@@ -39,6 +40,7 @@
       /* Remove margin-top to keep content lower */
       height: 100vh;
       overflow: hidden;
+      transition: width 0.2s cubic-bezier(.4,0,.2,1), margin-left 0.2s cubic-bezier(.4,0,.2,1);
     }
     .light-mode .ada-chat-container {
       background: #f5f5f5;
@@ -183,7 +185,7 @@
     }
     .chat-window {
       width: 100%;
-      max-width: 480px;
+      max-width: none;
       background: #22232a;
       border-radius: 16px;
       box-shadow: 0 2px 24px 0 #000a;
@@ -195,6 +197,7 @@
       max-height: 100vh;
       overflow: hidden;
       margin-bottom: 0;
+      margin: 0;
       animation: fadein 0.7s cubic-bezier(.4,0,.2,1);
       z-index: 1;
     }
@@ -251,26 +254,26 @@
       background: #fff;
     }
     .message {
-      max-width: 80%; padding: 12px 18px; border-radius: 16px; font-size: 1.08rem; line-height: 1.5; word-break: break-word; box-shadow: 0 1px 4px 0 #0002; opacity: 0; transform: translateY(20px); animation: msgin 0.4s cubic-bezier(.4,0,.2,1) forwards;
+      max-width: 70%; padding: 12px 18px; border-radius: 16px; font-size: 1.08rem; line-height: 1.5; word-break: break-word; box-shadow: 0 1px 4px 0 #0002; opacity: 0; transform: translateY(20px); animation: msgin 0.4s cubic-bezier(.4,0,.2,1) forwards;
     }
     .message.user {
       align-self: flex-end; background: linear-gradient(90deg, #1ed760 60%, #1ed760cc 100%); color: #181818; animation-delay: 0.05s;
     }
     .message.ada {
-      align-self: flex-start; background: #2a2b32; color: #fff; animation-delay: 0.1s; max-width: 85%; margin-right: 15%;
+      align-self: flex-start; background: #2a2b32; color: #fff; animation-delay: 0.1s; max-width: 75%; margin-right: 25%;
     }
     .light-mode .message.ada {
       background: #e9ecef; color: #333;
     }
     @keyframes msgin { to { opacity: 1; transform: none; } }
     .chat-input-row {
-      display: flex; padding: 12px 16px; background: #23242b; border-top: 1px solid #23242b;
+      display: flex; padding: 12px 24px; background: #23242b; border-top: 1px solid #23242b; gap: 8px;
     }
     .light-mode .chat-input-row {
       background: #f8f9fa; border-top: 1px solid #e9ecef;
     }
     .chat-input {
-      flex: 1; padding: 10px 14px; border-radius: 8px; border: none; font-size: 1rem; background: #181818; color: #fff; outline: none; margin-right: 8px; transition: box-shadow 0.2s;
+      flex: 1; padding: 10px 14px; border-radius: 8px; border: none; font-size: 1rem; background: #181818; color: #fff; outline: none; transition: box-shadow 0.2s; font-family: inherit; line-height: 1.4; min-height: 20px; max-height: 100px; overflow-y: auto;
     }
     .light-mode .chat-input {
       background: #fff; color: #333; border: 1px solid #ddd;
@@ -279,7 +282,7 @@
       box-shadow: 0 0 0 2px #1ed76088;
     }
     .send-btn {
-      background: #1ed760; color: #181818; border: none; border-radius: 8px; padding: 0 18px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s, transform 0.1s;
+      background: #1ed760; color: #181818; border: none; border-radius: 8px; padding: 0 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s, transform 0.1s; min-width: 80px;
     }
     .send-btn:active { transform: scale(0.96); }
     .send-btn:disabled {
@@ -1240,6 +1243,11 @@
     }
     .light-mode .sidebar { background: #f5f5f5; color: #222; }
     .sidebar.collapsed { width: 56px; }
+    .sidebar.collapsed ~ #mainApp .ada-chat-container {
+      width: calc(100vw - 56px);
+      margin-left: 56px;
+      transition: width 0.2s cubic-bezier(.4,0,.2,1), margin-left 0.2s cubic-bezier(.4,0,.2,1);
+    }
     .sidebar-header {
       display: flex; align-items: center; justify-content: space-between;
       padding: 12px 10px 12px 18px; font-weight: 600; font-size: 1.1em;
@@ -1357,6 +1365,7 @@
         border-radius: 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        margin-left: 0 !important;
         justify-content: flex-end !important;
         padding-bottom: 0 !important;
         padding-top: 0 !important;
@@ -1603,7 +1612,7 @@
           <button type="button" class="attach-btn" id="attachBtn" title="Attach file" style="margin-right:6px; background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 1 1-2.83-2.83l8.49-8.49"/></svg>
           </button>
-          <input class="chat-input" id="chatInput" type="text" placeholder="Talk to ADA..." autocomplete="off" style="flex:1 1 auto; min-width:0;" />
+          <textarea class="chat-input" id="chatInput" placeholder="Talk to ADA..." autocomplete="off" style="flex:1 1 auto; min-width:0; resize:none; overflow:hidden;" rows="1"></textarea>
           <button class="send-btn" id="sendBtn" type="submit">Send</button>
         </form>
       </div>
@@ -1942,7 +1951,8 @@
       const msgDiv = document.createElement('div');
       msgDiv.className = 'message ' + (isUser ? 'user' : 'ada');
       if (isUser) {
-        msgDiv.textContent = message.trim();
+        // Preserve line breaks for user messages
+        msgDiv.innerHTML = message.trim().replace(/\n/g, '<br>');
       } else {
         // Configure marked to add target and rel attributes to links
       const renderer = new marked.Renderer();
@@ -2130,11 +2140,12 @@
       clearErrorState();
       if ((!chatInput.value.trim() && attachedFiles.length === 0) || thinking) return;
       setThinking(true);
-      const userText = chatInput.value.trim();
-      if (userText) addMessage(userText, true);
+      const userText = chatInput.value; // Don't trim to preserve formatting
+      if (userText.trim()) addMessage(userText, true);
       // Store the message for potential retry, but clear the input for better UX
       const messageToRetry = userText;
       chatInput.value = '';
+      autoResizeTextarea(); // Reset textarea height
       // Show file sent message in chat
       let filesToSend = [];
       if (attachedFiles.length > 0) {
@@ -2404,6 +2415,7 @@
         // Restore the message to input field for retry
         if (messageToRetry) {
           chatInput.value = messageToRetry;
+          autoResizeTextarea(); // Resize textarea when restoring message
         }
         // Save conversation even when error occurs to preserve user message
         if (typeof conversations !== 'undefined' && conversations[currentConversationId]) {
@@ -2432,10 +2444,44 @@
     sendBtn.addEventListener('mouseleave', function() {
       sendBtn.style.transform = '';
     });
-    // Enter key disables if thinking
+    // Auto-resize textarea function
+    function autoResizeTextarea() {
+      const textarea = chatInput;
+      textarea.style.height = 'auto';
+      
+      // Calculate the height based on content
+      const scrollHeight = textarea.scrollHeight;
+      const maxHeight = 100; // 4 lines approximately (25px per line)
+      
+      if (scrollHeight <= maxHeight) {
+        textarea.style.height = Math.max(20, scrollHeight) + 'px';
+        textarea.style.overflowY = 'hidden';
+      } else {
+        textarea.style.height = maxHeight + 'px';
+        textarea.style.overflowY = 'auto';
+      }
+    }
+
+    // Handle Shift+Enter for line breaks, Enter for sending
     chatInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && thinking) e.preventDefault();
+      if (e.key === 'Enter' && thinking) {
+        e.preventDefault();
+        return;
+      }
+      
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        // Submit the form
+        chatForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      }
+      // Shift+Enter is allowed for line breaks (default behavior)
     });
+
+    // Auto-resize on input
+    chatInput.addEventListener('input', autoResizeTextarea);
+    
+    // Initial resize
+    autoResizeTextarea();
     // Animate the inner circle size
     let animStart = null;
     function animateInnerCircle(ts) {
@@ -3735,6 +3781,7 @@
             chatInput.value = tempMessageDraft.text;
             attachedFiles = tempMessageDraft.files.slice();
             renderFilePreviews();
+            autoResizeTextarea(); // Resize textarea when restoring draft
             tempMessageDraft = null;
             // Actually submit the form again
             chatForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
