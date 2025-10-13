@@ -184,7 +184,7 @@
       animation: shake 0.4s;
     }
     .chat-window {
-      width: 100%;
+      width: calc(100vw - 240px); /* Full width minus sidebar */
       max-width: none;
       background: rgba(34, 35, 42, 0.5); /* 50% transparent background */
       border-radius: 0; /* Remove rounded corners to connect to edges */
@@ -202,7 +202,6 @@
       position: fixed; /* Position fixed to connect to edges */
       top: 54px; /* Start from bottom of topbar */
       left: 240px; /* Start from right edge of sidebar */
-      right: 0; /* Extend to right edge */
       bottom: 0; /* Extend to bottom edge */
     }
     .light-mode .chat-window {
@@ -297,7 +296,9 @@
       background: #ccc; color: #666; cursor: not-allowed;
     }
     .conversation-id {
-      font-size: 0.8rem; color: #aaa; margin-bottom: 8px; user-select: all; text-align: center;
+      font-size: 0.8rem; color: #aaa; margin: 8px 16px; user-select: all; text-align: left;
+      padding: 4px 0;
+      border-bottom: 1px solid #333;
     }
     .light-mode .conversation-id {
       color: #666;
@@ -1387,7 +1388,6 @@
         position: fixed !important;
         top: 54px !important;
         left: 0 !important;
-        right: 0 !important;
         bottom: 0 !important;
         height: calc(100vh - 54px) !important;
         z-index: 1 !important;
@@ -1599,8 +1599,8 @@
         </div>
       </div>
       <div class="ai-status" id="aiStatus">AI Ready</div>
-      <div class="conversation-id" id="convId"></div>
       <div class="chat-window">
+        <div class="conversation-id" id="convId"></div>
         <div class="chat-topbar">
           <span class="chat-title">ADA Chat</span>
           <div class="topbar-buttons">
@@ -1621,10 +1621,10 @@
         <div id="filePreviewArea" style="display:none;"></div>
         <form class="chat-input-row" id="chatForm" autocomplete="off">
           <input type="file" id="chatFileInput" style="display:none" multiple />
-          <button type="button" class="attach-btn" id="attachBtn" title="Attach file" style="margin-right:6px; background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+          <textarea class="chat-input" id="chatInput" placeholder="Talk to ADA..." autocomplete="off" style="flex:1 1 auto; min-width:0; resize:none; overflow:hidden; margin-right: 8px;" rows="1"></textarea>
+          <button type="button" class="attach-btn" id="attachBtn" title="Attach file" style="margin-right:8px; background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 1 1-2.83-2.83l8.49-8.49"/></svg>
           </button>
-          <textarea class="chat-input" id="chatInput" placeholder="Talk to ADA..." autocomplete="off" style="flex:1 1 auto; min-width:0; resize:none; overflow:hidden;" rows="1"></textarea>
           <button class="send-btn" id="sendBtn" type="submit">Send</button>
         </form>
       </div>
