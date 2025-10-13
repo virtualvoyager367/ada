@@ -34,8 +34,8 @@
       margin-bottom: 0;
       margin-left: 240px;
       justify-content: flex-end;
-      padding-bottom: 8vh; /* Less space at the bottom */
-      padding-top: 6vh;   /* Add some space at the top to lift content higher */
+      padding-bottom: 0; /* Remove padding since chat window is positioned independently */
+      padding-top: 0;   /* Remove padding since chat window is positioned independently */
       z-index: 1;
       /* Remove margin-top to keep content lower */
       height: 100vh;
@@ -186,13 +186,12 @@
     .chat-window {
       width: 100%;
       max-width: none;
-      background: #22232a;
-      border-radius: 16px;
-      box-shadow: 0 2px 24px 0 #000a;
+      background: rgba(34, 35, 42, 0.5); /* 50% transparent background */
+      border-radius: 0; /* Remove rounded corners to connect to edges */
+      box-shadow: none; /* Remove popup shadow */
       display: flex;
       flex-direction: column;
-      /* height: 540px; */
-      height: calc(100vh - 40px); /* Stretch even closer to the bottom */
+      height: calc(100vh - 54px); /* Go from bottom of topbar (54px) to bottom of screen */
       min-height: 320px;
       max-height: 100vh;
       overflow: hidden;
@@ -200,9 +199,15 @@
       margin: 0;
       animation: fadein 0.7s cubic-bezier(.4,0,.2,1);
       z-index: 1;
+      position: fixed; /* Position fixed to connect to edges */
+      top: 54px; /* Start from bottom of topbar */
+      left: 240px; /* Start from right edge of sidebar */
+      right: 0; /* Extend to right edge */
+      bottom: 0; /* Extend to bottom edge */
     }
     .light-mode .chat-window {
-      background: #fff; box-shadow: 0 2px 24px 0 #0002;
+      background: rgba(255, 255, 255, 0.5); /* 50% transparent white background */
+      box-shadow: none; /* Remove popup shadow */
     }
     @keyframes fadein { from { opacity: 0; transform: translateY(40px);} to { opacity: 1; transform: none; } }
     .chat-topbar {
@@ -1379,10 +1384,17 @@
         width: 100vw !important;
         border-radius: 0 !important;
         margin: 0 !important;
-        position: relative !important;
+        position: fixed !important;
+        top: 54px !important;
+        left: 0 !important;
+        right: 0 !important;
         bottom: 0 !important;
         height: calc(100vh - 54px) !important;
         z-index: 1 !important;
+        background: rgba(34, 35, 42, 0.5) !important;
+      }
+      .light-mode .chat-window {
+        background: rgba(255, 255, 255, 0.5) !important;
       }
       .sidebar {
         position: fixed !important;
