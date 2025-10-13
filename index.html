@@ -2159,9 +2159,9 @@
           filesToSend.forEach(f => formData.append('file', f));
           formData.append('message', fullMessage);
           formData.append('conversationId', conversationId);
-          formData.append('user', currentUser);
+          formData.append('user', getCookie('ada_current_user'));
           formData.append('mode', currentMode);
-          formData.append('loginToken', loginToken);
+          formData.append('loginToken', getCookie('ada_login_token'));
           res = await fetch('https://n8n.tail851803.ts.net/webhook/8c65cdd1-4ace-49eb-ab59-c9666cb0fc41', {
             method: 'POST',
             body: formData
@@ -2171,7 +2171,7 @@
           res = await fetch('https://n8n.tail851803.ts.net/webhook/8c65cdd1-4ace-49eb-ab59-c9666cb0fc41', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userText, conversationId, user: currentUser, mode: currentMode, loginToken: loginToken })
+            body: JSON.stringify({ message: userText, conversationId, user: getCookie('ada_current_user'), mode: currentMode, loginToken: getCookie('ada_login_token') })
           });
         }
 
@@ -2841,7 +2841,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            user: currentUser, 
+            user: getCookie('ada_current_user'), 
             currentDisplayName: displayName, 
             newDisplayName: newDisplayName 
           })
@@ -2892,7 +2892,7 @@
         const res = await fetch('https://n8n.tail851803.ts.net/webhook/6666de10-5902-478d-a865-43136a8f3eca', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: currentUser, newPassword })
+          body: JSON.stringify({ user: getCookie('ada_current_user'), newPassword })
         });
         const result = await res.text();
         let message = result.trim();
