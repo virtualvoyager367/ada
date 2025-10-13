@@ -191,16 +191,16 @@
       box-shadow: none; /* Remove popup shadow */
       display: flex;
       flex-direction: column;
-      height: 100vh; /* Full height from top to bottom */
+      height: calc(100vh - 54px); /* Height from bottom of topbar to bottom of screen */
       min-height: 320px;
-      max-height: 100vh;
+      max-height: calc(100vh - 54px);
       overflow: hidden;
       margin-bottom: 0;
       margin: 0;
       animation: fadein 0.7s cubic-bezier(.4,0,.2,1);
       z-index: 1;
       position: fixed; /* Position fixed to connect to edges */
-      top: 0; /* Start from top of screen */
+      top: 54px; /* Start from bottom of topbar */
       left: 240px; /* Start from right edge of sidebar */
       bottom: 0; /* Extend to bottom edge */
       transition: width 0.2s cubic-bezier(.4,0,.2,1), left 0.2s cubic-bezier(.4,0,.2,1);
@@ -209,7 +209,7 @@
       background: rgba(255, 255, 255, 0.5); /* 50% transparent white background */
       box-shadow: none; /* Remove popup shadow */
     }
-    .sidebar.collapsed ~ .chat-window {
+    .sidebar.collapsed ~ #mainApp .chat-window {
       width: calc(100vw - 56px);
       left: 56px;
     }
@@ -1396,10 +1396,10 @@
         border-radius: 0 !important;
         margin: 0 !important;
         position: fixed !important;
-        top: 0 !important;
+        top: 54px !important;
         left: 0 !important;
         bottom: 0 !important;
-        height: 100vh !important;
+        height: calc(100vh - 54px) !important;
         z-index: 1 !important;
         background: rgba(34, 35, 42, 0.5) !important;
       }
