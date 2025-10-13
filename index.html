@@ -2161,6 +2161,7 @@
           formData.append('conversationId', conversationId);
           formData.append('user', currentUser);
           formData.append('mode', currentMode);
+          formData.append('loginToken', loginToken);
           res = await fetch('https://n8n.tail851803.ts.net/webhook/8c65cdd1-4ace-49eb-ab59-c9666cb0fc41', {
             method: 'POST',
             body: formData
@@ -2170,7 +2171,7 @@
           res = await fetch('https://n8n.tail851803.ts.net/webhook/8c65cdd1-4ace-49eb-ab59-c9666cb0fc41', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userText, conversationId, user: currentUser, mode: currentMode })
+            body: JSON.stringify({ message: userText, conversationId, user: currentUser, mode: currentMode, loginToken: loginToken })
           });
         }
 
