@@ -4200,27 +4200,66 @@
               
               return true;
             } else if (responseText.toLowerCase().includes('invalid')) {
-              // Token is invalid, clear cookies and show login
-              console.log('❌ Login token validation failed - clearing cookies');
+              // Token is invalid, clear only login cookies and show error
+              console.log('❌ Login token validation failed - clearing login cookies');
               deleteCookie('ada_login_token');
               deleteCookie('ada_current_user');
+              // Show login screen with error message
+              document.getElementById('loginContainer').style.display = 'flex';
+              document.getElementById('mainApp').style.display = 'none';
+              document.getElementById('aiTopbar').style.display = 'none';
+              const loginError = document.getElementById('loginError');
+              if (loginError) {
+                loginError.style.display = 'block';
+                loginError.textContent = 'Failed';
+              }
               return false;
             } else {
-              console.log('⚠️ Unexpected webhook response format - clearing cookies');
+              console.log('⚠️ Unexpected webhook response format - clearing login cookies');
               console.log('Response did not contain "valid" or "invalid"');
               deleteCookie('ada_login_token');
               deleteCookie('ada_current_user');
+              // Show login screen with error message
+              document.getElementById('loginContainer').style.display = 'flex';
+              document.getElementById('mainApp').style.display = 'none';
+              document.getElementById('aiTopbar').style.display = 'none';
+              const loginError = document.getElementById('loginError');
+              if (loginError) {
+                loginError.style.display = 'block';
+                loginError.textContent = 'Failed';
+              }
               return false;
             }
           } else {
             console.log('❌ Webhook request failed with status:', response.status);
+            // Clear only login cookies and show error
+            deleteCookie('ada_login_token');
+            deleteCookie('ada_current_user');
+            // Show login screen with error message
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('aiTopbar').style.display = 'none';
+            const loginError = document.getElementById('loginError');
+            if (loginError) {
+              loginError.style.display = 'block';
+              loginError.textContent = 'Failed';
+            }
             return false;
           }
         } catch (error) {
           console.error('Error validating login cookies:', error);
-          // On error, clear cookies to be safe
+          // On error, clear only login cookies and show error
           deleteCookie('ada_login_token');
           deleteCookie('ada_current_user');
+          // Show login screen with error message
+          document.getElementById('loginContainer').style.display = 'flex';
+          document.getElementById('mainApp').style.display = 'none';
+          document.getElementById('aiTopbar').style.display = 'none';
+          const loginError = document.getElementById('loginError');
+          if (loginError) {
+            loginError.style.display = 'block';
+            loginError.textContent = 'Failed';
+          }
         }
       }
       
