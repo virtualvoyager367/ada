@@ -2941,51 +2941,37 @@
           } catch {}
         }
       }
-      if (foundUser) {
-        // Show loading screen at the start of auto-login
-        const loadingScreen = document.getElementById('appLoadingScreen');
-        if (loadingScreen) loadingScreen.classList.remove('hidden');
-        
+if (foundUser) {
         currentUser = foundUser;
         displayName = foundDisplayName;
         loginContainer.style.display = 'none';
-        mainApp.style.display = '';
+        mainApp.style.display = 'block';
         var aiTopbar = document.getElementById('aiTopbar');
-        if (aiTopbar) aiTopbar.style.display = '';
+        if (aiTopbar) aiTopbar.style.display = 'flex';
         updateProfileTopbar();
         
-        // Load conversations for this user (from localStorage, not cookies)
+        // Show loading screen before fetching conversations
+        showLoadingScreen();
+        
         try {
+          // Load conversations for this user (from localStorage, not cookies)
           await loadConversations();
+          
           // Always start with new chat on refresh
           currentConversationId = null;
           renderConversationList();
           await switchConversation(null);
           
-          // Wait for 2.5 seconds after everything is loaded before hiding
+          // Wait 2.5 seconds after everything is loaded before hiding
           await new Promise(resolve => setTimeout(resolve, 2500));
           
           // Hide loading screen with fade out animation
-          if (loadingScreen) {
-            loadingScreen.classList.add('hidden');
-            // Remove from DOM after animation completes
-            setTimeout(() => {
-              if (loadingScreen.parentNode) {
-                loadingScreen.parentNode.removeChild(loadingScreen);
-              }
-            }, 600);
-          }
+          hideLoadingScreen();
+          
         } catch (error) {
           console.error('Error during auto-login:', error);
           // Still hide loading screen on error
-          if (loadingScreen) {
-            loadingScreen.classList.add('hidden');
-            setTimeout(() => {
-              if (loadingScreen.parentNode) {
-                loadingScreen.parentNode.removeChild(loadingScreen);
-              }
-            }, 600);
-          }
+          hideLoadingScreen();
         }
       } else if (loadSessionData()) {
         loginContainer.style.display = 'none';
