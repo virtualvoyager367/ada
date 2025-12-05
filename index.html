@@ -3622,22 +3622,40 @@
         // Parse the conversations data
         try {
           const parsed = JSON.parse(conversationsData.trim());
-          // Expected format: { conversations: { [id]: { name, timestamp, messages } } }
-          // or array format: [{ id, name, timestamp, messages }, ...]
-          if (parsed.conversations) {
-            conversations = parsed.conversations;
-          } else if (Array.isArray(parsed)) {
-            // Convert array to object format
-            conversations = {};
+          conversations = {};
+          
+          // Handle array format: [{ session_id, messages: [{ type, content, meta }] }, ...]
+          if (Array.isArray(parsed)) {
             parsed.forEach(conv => {
-              if (conv.id) {
-                conversations[conv.id] = {
-                  name: conv.name || 'Conversation',
-                  timestamp: conv.timestamp || Date.now(),
-                  messages: conv.messages || []
+              if (conv.session_id) {
+                // Convert messages from backend format to app format
+                const convertedMessages = (conv.messages || []).map((msg, index) => {
+                  return {
+                    text: msg.content || '',
+                    isUser: msg.type === 'human',
+                    timestamp: msg.timestamp || Date.now() - (conv.messages.length - index) * 1000 // Generate timestamps if missing
+                  };
+                });
+                
+                // Generate conversation name from first user message, or use default
+                let conversationName = 'Conversation';
+                const firstUserMessage = convertedMessages.find(m => m.isUser);
+                if (firstUserMessage && firstUserMessage.text) {
+                  // Use first 30 characters of first user message as name
+                  conversationName = firstUserMessage.text.trim().substring(0, 30);
+                  if (firstUserMessage.text.length > 30) conversationName += '...';
+                }
+                
+                conversations[conv.session_id] = {
+                  name: conversationName,
+                  timestamp: conv.timestamp || (convertedMessages.length > 0 ? convertedMessages[0].timestamp : Date.now()),
+                  messages: convertedMessages
                 };
               }
             });
+          } else if (parsed.conversations) {
+            // Handle object format: { conversations: { [id]: { name, timestamp, messages } } }
+            conversations = parsed.conversations;
           } else {
             conversations = {};
           }
