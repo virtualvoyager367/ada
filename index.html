@@ -2943,7 +2943,8 @@
       }
       if (foundUser) {
         // Show loading screen at the start of auto-login
-        showLoadingScreen();
+        const loadingScreen = document.getElementById('appLoadingScreen');
+        if (loadingScreen) loadingScreen.classList.remove('hidden');
         
         currentUser = foundUser;
         displayName = foundDisplayName;
@@ -2961,12 +2962,30 @@
           renderConversationList();
           await switchConversation(null);
           
-          // Wait for 2.5 seconds after everything is loaded before hiding the loading screen
+          // Wait for 2.5 seconds after everything is loaded before hiding
           await new Promise(resolve => setTimeout(resolve, 2500));
+          
+          // Hide loading screen with fade out animation
+          if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+            // Remove from DOM after animation completes
+            setTimeout(() => {
+              if (loadingScreen.parentNode) {
+                loadingScreen.parentNode.removeChild(loadingScreen);
+              }
+            }, 600);
+          }
         } catch (error) {
           console.error('Error during auto-login:', error);
-        } finally {
-          hideLoadingScreen();
+          // Still hide loading screen on error
+          if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+              if (loadingScreen.parentNode) {
+                loadingScreen.parentNode.removeChild(loadingScreen);
+              }
+            }, 600);
+          }
         }
       } else if (loadSessionData()) {
         loginContainer.style.display = 'none';
