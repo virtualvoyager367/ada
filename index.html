@@ -2910,7 +2910,7 @@
     }
 
     // Check for existing session on page load
-    window.addEventListener('DOMContentLoaded', function() {
+    window.addEventListener('DOMContentLoaded', async function() {
       // Check adaCurrentUser cookie
       const cookies = document.cookie.split(';');
       let foundUser = '';
@@ -2942,6 +2942,9 @@
         }
       }
       if (foundUser) {
+        // Show loading screen at the start of auto-login
+        showLoadingScreen();
+        
         currentUser = foundUser;
         displayName = foundDisplayName;
         loginContainer.style.display = 'none';
@@ -2949,12 +2952,22 @@
         var aiTopbar = document.getElementById('aiTopbar');
         if (aiTopbar) aiTopbar.style.display = '';
         updateProfileTopbar();
+        
         // Load conversations for this user (from localStorage, not cookies)
-        loadConversations();
-        // Always start with new chat on refresh
-        currentConversationId = null;
-        renderConversationList();
-        switchConversation(null);
+        try {
+          await loadConversations();
+          // Always start with new chat on refresh
+          currentConversationId = null;
+          renderConversationList();
+          await switchConversation(null);
+          
+          // Wait for 2.5 seconds after everything is loaded before hiding the loading screen
+          await new Promise(resolve => setTimeout(resolve, 2500));
+        } catch (error) {
+          console.error('Error during auto-login:', error);
+        } finally {
+          hideLoadingScreen();
+        }
       } else if (loadSessionData()) {
         loginContainer.style.display = 'none';
         mainApp.style.display = '';
