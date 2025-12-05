@@ -188,9 +188,9 @@
       align-items: center;
       justify-content: center;
       z-index: 10000;
-      opacity: 1;
+      opacity: 0;
       transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
-      visibility: visible;
+      visibility: hidden;
     }
     .light-mode #appLoadingScreen {
       background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 50%, #dcdcdc 100%);
@@ -254,14 +254,25 @@
       font-weight: 300;
       text-transform: uppercase;
       animation: loadingTextFade 2s ease-in-out infinite;
+      text-align: center;
     }
     .light-mode .loading-text {
       color: #19b84c;
+    }
+    .loading-text-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
     }
     .loading-dots {
       display: flex;
       gap: 8px;
       margin-top: 8px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
     }
     .loading-dot {
       width: 8px;
@@ -1675,7 +1686,7 @@
   <div id="appLoadingScreen">
     <div class="loading-content">
       <div class="loading-logo"></div>
-      <div>
+      <div class="loading-text-container">
         <div class="loading-text">Loading Conversations</div>
         <div class="loading-dots">
           <div class="loading-dot"></div>
@@ -2786,16 +2797,15 @@
               // Show loading screen while conversations load
               showLoadingScreen();
               
-              // Load only this user's conversations
-              loadConversations();
+              // Fetch conversations from backend
+              await fetchConversationsFromBackend();
               currentConversationId = null;
               renderConversationList();
               switchConversation(null);
               
-              // Hide loading screen after conversations are loaded
-              setTimeout(() => {
-                hideLoadingScreen();
-              }, 300);
+              // Wait 2.5 seconds after conversations are loaded before hiding
+              await new Promise(resolve => setTimeout(resolve, 2500));
+              hideLoadingScreen();
               
               // Always reset login button after successful login
               loginBtn.classList.remove('login-btn-loading');
@@ -3717,7 +3727,7 @@
         loadingScreen.innerHTML = `
           <div class="loading-content">
             <div class="loading-logo"></div>
-            <div>
+            <div class="loading-text-container">
               <div class="loading-text">Loading Conversations</div>
               <div class="loading-dots">
                 <div class="loading-dot"></div>
@@ -4026,9 +4036,7 @@
     // Hide loading screen after initial conversations are loaded (if not logged in)
     // If logged in, it will be hidden after fetchConversationsFromBackend completes
     if (!currentUser) {
-      setTimeout(() => {
-        hideLoadingScreen();
-      }, 300);
+      hideLoadingScreen();
     }
 
     // Add a function to show the ADA home section (blank welcome page)
@@ -4354,14 +4362,13 @@
         // Update profile display
         updateProfileDisplay();
         
-        // Load user-specific conversations
-        loadConversations();
+        // Fetch conversations from backend
+        await fetchConversationsFromBackend();
         renderConversationList();
         
-        // Hide loading screen after conversations are loaded
-        setTimeout(() => {
-          hideLoadingScreen();
-        }, 300);
+        // Wait 2.5 seconds after conversations are loaded before hiding
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        hideLoadingScreen();
         
         // Focus on chat input
         setTimeout(() => {
@@ -4524,10 +4531,9 @@
               currentConversationId = null; // Force new chat on auto-login
               renderConversationList();
               
-              // Hide loading screen after conversations are loaded
-              setTimeout(() => {
-                hideLoadingScreen();
-              }, 300);
+              // Wait 2.5 seconds after conversations are loaded before hiding
+              await new Promise(resolve => setTimeout(resolve, 2500));
+              hideLoadingScreen();
               
               return true;
             } else if (responseText.toLowerCase().includes('invalid')) {
@@ -4610,11 +4616,7 @@
         }
       }
       
-      // If no saved login, hide loading screen
-      setTimeout(() => {
-        hideLoadingScreen();
-      }, 300);
-      
+      // If no saved login, return false (loading screen was never shown)
       return false;
     }
     
@@ -4645,6 +4647,15 @@
     
     // Initialize login system on page load
     document.addEventListener('DOMContentLoaded', async function() {
+      // Check if there's a saved login token - if yes, show loading screen while checking
+      const savedToken = getCookie('ada_login_token');
+      const savedUser = getCookie('ada_current_user');
+      
+      if (savedToken && savedUser) {
+        // Show loading screen while checking auto-login
+        showLoadingScreen();
+      }
+      
       const loginSuccessful = await checkExistingLogin();
       if (!loginSuccessful) {
         // Show login form and focus on username
@@ -4652,37 +4663,52 @@
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('aiTopbar').style.display = 'none';
         
-        // Hide loading screen when showing login form
-        setTimeout(() => {
-          hideLoadingScreen();
-        }, 300);
+        // Hide loading screen when showing login form (if it was shown)
+        hideLoadingScreen();
         
         setTimeout(() => {
           document.getElementById('loginUsername').focus();
         }, 100);
       }
+      // If login was successful, loading screen will be hidden after conversations load
     });
     
     // Call initialization immediately if DOM is already loaded
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', async () => {
+        // Check if there's a saved login token - if yes, show loading screen while checking
+        const savedToken = getCookie('ada_login_token');
+        const savedUser = getCookie('ada_current_user');
+        
+        if (savedToken && savedUser) {
+          // Show loading screen while checking auto-login
+          showLoadingScreen();
+        }
+        
         const loginSuccessful = await checkExistingLogin();
         if (!loginSuccessful) {
-          // Hide loading screen when showing login form
-          setTimeout(() => {
-            hideLoadingScreen();
-          }, 300);
+          // Hide loading screen when showing login form (if it was shown)
+          hideLoadingScreen();
         }
+        // If login was successful, loading screen will be hidden after conversations load
       });
     } else {
       (async () => {
+        // Check if there's a saved login token - if yes, show loading screen while checking
+        const savedToken = getCookie('ada_login_token');
+        const savedUser = getCookie('ada_current_user');
+        
+        if (savedToken && savedUser) {
+          // Show loading screen while checking auto-login
+          showLoadingScreen();
+        }
+        
         const loginSuccessful = await checkExistingLogin();
         if (!loginSuccessful) {
-          // Hide loading screen when showing login form
-          setTimeout(() => {
-            hideLoadingScreen();
-          }, 300);
+          // Hide loading screen when showing login form (if it was shown)
+          hideLoadingScreen();
         }
+        // If login was successful, loading screen will be hidden after conversations load
       })();
     }
   </script>
