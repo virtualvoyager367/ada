@@ -46,7 +46,7 @@
       background: #f5f5f5;
     }
     .circle-container {
-      margin-top: 32px; margin-bottom: 8px; display: flex; justify-content: center; align-items: center; height: 180px;
+      display: none !important;
     }
     .pulse-outer {
       width: 160px; height: 160px; border-radius: 50%; background: #1ed760; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 48px 0 #1ed76099; animation: pulse-bright 5s infinite cubic-bezier(.4,0,.2,1);
@@ -151,15 +151,7 @@
       color: #7ecbff;
     }
     .ai-status {
-      min-height: 28px;
-      text-align: center;
-      font-size: 1.1rem;
-      color: #b6ffc6;
-      margin-bottom: 16px;
-      font-weight: 500;
-      user-select: none;
-      transition: color 0.3s;
-      display: block;
+      display: none !important;
     }
     .ai-status.thinking-status {
       color: #1761a0;
@@ -1602,13 +1594,6 @@
       </div>
     </div>
     <div class="ada-chat-container">
-      <div class="circle-container">
-        <div class="pulse-outer" id="pulseOuter">
-          <div class="pulse-inner-anim" id="pulseInnerAnim"></div>
-          <div class="pulse-inner"></div>
-        </div>
-      </div>
-      <div class="ai-status" id="aiStatus">AI Ready</div>
       <div class="chat-window">
         <div class="chat-topbar">
           <span class="chat-title">ADA Chat</span>
@@ -1764,10 +1749,12 @@
         lightModeBtn.classList.add('active');
       }
       
-      if (isPulseEnabled) {
-        pulseOuter.classList.remove('no-pulse');
-      } else {
-        pulseOuter.classList.add('no-pulse');
+      if (pulseOuter) {
+        if (isPulseEnabled) {
+          pulseOuter.classList.remove('no-pulse');
+        } else {
+          pulseOuter.classList.add('no-pulse');
+        }
       }
       
       // Update toggle states
@@ -1846,9 +1833,11 @@
       const average = sum / count;
       
       // Inner circle scales based on audio wavelengths like existing animation
-      const scale = 0.2 + (average / 255) * 0.5; // Scale from 0.2 to 0.7 based on audio
-      pulseInnerAnim.style.width = `${scale * 100}px`;
-      pulseInnerAnim.style.height = `${scale * 100}px`;
+      if (pulseInnerAnim) {
+        const scale = 0.2 + (average / 255) * 0.5; // Scale from 0.2 to 0.7 based on audio
+        pulseInnerAnim.style.width = `${scale * 100}px`;
+        pulseInnerAnim.style.height = `${scale * 100}px`;
+      }
       
       requestAnimationFrame(animateAudio);
     }
@@ -2077,9 +2066,9 @@
     function setThinking(isThinking = true) {
       thinking = isThinking;
       if (isThinking) {
-        pulseOuter.classList.add('thinking');
-        pulseInnerAnim.classList.add('thinking');
-        aiStatus.style.display = '';
+        if (pulseOuter) pulseOuter.classList.add('thinking');
+        if (pulseInnerAnim) pulseInnerAnim.classList.add('thinking');
+        if (aiStatus) aiStatus.style.display = '';
         startStatusAnim();
         // Send button loading effect
         sendBtn.classList.add('login-btn-loading');
@@ -2090,13 +2079,13 @@
           icon.classList.add('fade-anim');
         });
       } else {
-        pulseOuter.classList.remove('thinking');
-        pulseInnerAnim.classList.remove('thinking');
+        if (pulseOuter) pulseOuter.classList.remove('thinking');
+        if (pulseInnerAnim) pulseInnerAnim.classList.remove('thinking');
         stopStatusAnim();
         // Remove send button loading effect
         sendBtn.classList.remove('login-btn-loading');
         sendBtn.disabled = false;
-        if (!aiStatus.classList.contains('error-status')) {
+        if (aiStatus && !aiStatus.classList.contains('error-status')) {
           aiStatus.textContent = 'AI Ready';
         }
         if (typeof renderConversationList === 'function') renderConversationList();
@@ -2113,33 +2102,39 @@
       }
     }
     function setOffline() {
-      pulseOuter.classList.remove('thinking');
-      pulseOuter.classList.add('offline');
-      pulseInnerAnim.classList.remove('thinking');
-      pulseInnerAnim.classList.add('offline');
+      if (pulseOuter) {
+        pulseOuter.classList.remove('thinking');
+        pulseOuter.classList.add('offline');
+      }
+      if (pulseInnerAnim) {
+        pulseInnerAnim.classList.remove('thinking');
+        pulseInnerAnim.classList.add('offline');
+      }
       sendBtn.disabled = true;
       chatInput.disabled = true;
-      aiStatus.style.display = 'none';
+      if (aiStatus) aiStatus.style.display = 'none';
     }
     function setOnline() {
-      pulseOuter.classList.remove('offline');
-      pulseInnerAnim.classList.remove('offline');
+      if (pulseOuter) pulseOuter.classList.remove('offline');
+      if (pulseInnerAnim) pulseInnerAnim.classList.remove('offline');
       sendBtn.disabled = false;
       chatInput.disabled = false;
-      aiStatus.style.display = '';
+      if (aiStatus) aiStatus.style.display = '';
     }
     function startStatusAnim() {
+      if (!aiStatus) return;
       let dots = 0;
       stopStatusAnim();
       aiStatus.style.display = '';
       aiStatus.classList.add('thinking-status');
       statusInterval = setInterval(() => {
         dots = (dots + 1) % 3;
-        aiStatus.textContent = 'Thinking' + '.'.repeat(dots + 1);
+        if (aiStatus) aiStatus.textContent = 'Thinking' + '.'.repeat(dots + 1);
       }, 500);
     }
     function stopStatusAnim() {
       clearInterval(statusInterval);
+      if (!aiStatus) return;
       aiStatus.classList.remove('thinking-status');
       if (!aiStatus.classList.contains('error-status')) {
         aiStatus.textContent = 'AI Ready';
@@ -2147,13 +2142,19 @@
     }
     function setErrorState() {
       thinking = false; // Reset thinking state when error occurs
-      pulseOuter.classList.remove('thinking', 'offline');
-      pulseOuter.classList.add('error');
-      pulseInnerAnim.classList.remove('thinking', 'offline');
-      pulseInnerAnim.classList.add('error');
-      aiStatus.style.display = '';
-      aiStatus.classList.add('error-status');
-      aiStatus.textContent = 'Error Occurred';
+      if (pulseOuter) {
+        pulseOuter.classList.remove('thinking', 'offline');
+        pulseOuter.classList.add('error');
+      }
+      if (pulseInnerAnim) {
+        pulseInnerAnim.classList.remove('thinking', 'offline');
+        pulseInnerAnim.classList.add('error');
+      }
+      if (aiStatus) {
+        aiStatus.style.display = '';
+        aiStatus.classList.add('error-status');
+        aiStatus.textContent = 'Error Occurred';
+      }
       sendBtn.disabled = true;
       chatInput.disabled = true;
     }
@@ -2510,10 +2511,12 @@
       if (!animStart) animStart = ts;
       const t = ((ts - animStart) / 2000) % 1; // 2s period
       // Use a smooth sine wave for size
-      const min = 32, max = 112; // px (32px = white, 112px = 3.5/5 of 160px)
-      const s = min + (max - min) * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI));
-      pulseInnerAnim.style.width = s + 'px';
-      pulseInnerAnim.style.height = s + 'px';
+      if (pulseInnerAnim) {
+        const min = 32, max = 112; // px (32px = white, 112px = 3.5/5 of 160px)
+        const s = min + (max - min) * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI));
+        pulseInnerAnim.style.width = s + 'px';
+        pulseInnerAnim.style.height = s + 'px';
+      }
       requestAnimationFrame(animateInnerCircle);
     }
     requestAnimationFrame(animateInnerCircle);
@@ -3292,11 +3295,13 @@
     }
     function clearErrorState() {
       thinking = false; // Ensure thinking is reset when clearing error state
-      pulseOuter.classList.remove('error');
-      pulseInnerAnim.classList.remove('error');
-      aiStatus.classList.remove('error-status');
-      if (!aiStatus.classList.contains('error-status')) {
-        aiStatus.textContent = 'AI Ready';
+      if (pulseOuter) pulseOuter.classList.remove('error');
+      if (pulseInnerAnim) pulseInnerAnim.classList.remove('error');
+      if (aiStatus) {
+        aiStatus.classList.remove('error-status');
+        if (!aiStatus.classList.contains('error-status')) {
+          aiStatus.textContent = 'AI Ready';
+        }
       }
       sendBtn.disabled = false;
       chatInput.disabled = false;
