@@ -175,6 +175,153 @@
       letter-spacing: 0.04em;
       animation: shake 0.4s;
     }
+    /* Loading Screen Styles */
+    #appLoadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #181818 0%, #1a1a2e 50%, #16213e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 1;
+      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
+      visibility: visible;
+    }
+    .light-mode #appLoadingScreen {
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 50%, #dcdcdc 100%);
+    }
+    #appLoadingScreen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+    .loading-logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1ed760 0%, #19b84c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 0 60px rgba(30, 215, 96, 0.5),
+                  0 0 120px rgba(30, 215, 96, 0.3),
+                  inset 0 0 30px rgba(255, 255, 255, 0.1);
+      animation: loadingPulse 2s ease-in-out infinite;
+    }
+    .light-mode .loading-logo {
+      background: linear-gradient(135deg, #1ed760 0%, #19b84c 100%);
+      box-shadow: 0 0 60px rgba(30, 215, 96, 0.4),
+                  0 0 120px rgba(30, 215, 96, 0.2),
+                  inset 0 0 30px rgba(255, 255, 255, 0.2);
+    }
+    .loading-logo::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: rgba(255, 255, 255, 0.8);
+      border-right-color: rgba(255, 255, 255, 0.6);
+      animation: loadingSpin 1.2s linear infinite;
+    }
+    .loading-logo::after {
+      content: 'ADA';
+      font-size: 32px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      letter-spacing: 2px;
+      z-index: 1;
+    }
+    .loading-text {
+      font-size: 18px;
+      color: #b6ffc6;
+      letter-spacing: 3px;
+      font-weight: 300;
+      text-transform: uppercase;
+      animation: loadingTextFade 2s ease-in-out infinite;
+    }
+    .light-mode .loading-text {
+      color: #19b84c;
+    }
+    .loading-dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #1ed760;
+      animation: loadingDotBounce 1.4s ease-in-out infinite;
+    }
+    .light-mode .loading-dot {
+      background: #19b84c;
+    }
+    .loading-dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+    .loading-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .loading-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes loadingPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 60px rgba(30, 215, 96, 0.5),
+                    0 0 120px rgba(30, 215, 96, 0.3),
+                    inset 0 0 30px rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 80px rgba(30, 215, 96, 0.7),
+                    0 0 140px rgba(30, 215, 96, 0.5),
+                    inset 0 0 30px rgba(255, 255, 255, 0.15);
+      }
+    }
+    @keyframes loadingSpin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    @keyframes loadingTextFade {
+      0%, 100% {
+        opacity: 0.6;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+    @keyframes loadingDotBounce {
+      0%, 80%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+      }
+      40% {
+        transform: translateY(-12px);
+        opacity: 1;
+      }
+    }
     .chat-window {
       width: calc(100vw - 240px); /* Full width minus sidebar */
       max-width: none;
@@ -1524,6 +1671,20 @@
   </script>
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="appLoadingScreen">
+    <div class="loading-content">
+      <div class="loading-logo"></div>
+      <div>
+        <div class="loading-text">Loading Conversations</div>
+        <div class="loading-dots">
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <canvas id="particleBgCanvas" width="1920" height="1080"></canvas>
   <div id="loginContainer">
     <canvas id="loginBgCanvas" width="1920" height="1080"></canvas>
@@ -2621,11 +2782,21 @@
               var aiTopbar = document.getElementById('aiTopbar');
               if (aiTopbar) aiTopbar.style.display = '';
               updateProfileTopbar();
+              
+              // Show loading screen while conversations load
+              showLoadingScreen();
+              
               // Load only this user's conversations
               loadConversations();
               currentConversationId = null;
               renderConversationList();
               switchConversation(null);
+              
+              // Hide loading screen after conversations are loaded
+              setTimeout(() => {
+                hideLoadingScreen();
+              }, 300);
+              
               // Always reset login button after successful login
               loginBtn.classList.remove('login-btn-loading');
               loginBtn.disabled = false;
@@ -3522,6 +3693,47 @@
     function getConvoStorageKey() {
       return currentUser ? `adaConversations_${currentUser}` : 'adaConversations';
     }
+    // Loading screen control
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById('appLoadingScreen');
+      if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        // Remove from DOM after animation completes
+        setTimeout(() => {
+          if (loadingScreen.parentNode) {
+            loadingScreen.parentNode.removeChild(loadingScreen);
+          }
+        }, 600);
+      }
+    }
+    
+    function showLoadingScreen() {
+      let loadingScreen = document.getElementById('appLoadingScreen');
+      
+      // If loading screen was removed, recreate it
+      if (!loadingScreen) {
+        loadingScreen = document.createElement('div');
+        loadingScreen.id = 'appLoadingScreen';
+        loadingScreen.innerHTML = `
+          <div class="loading-content">
+            <div class="loading-logo"></div>
+            <div>
+              <div class="loading-text">Loading Conversations</div>
+              <div class="loading-dots">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertBefore(loadingScreen, document.body.firstChild);
+      }
+      
+      // Show the loading screen
+      loadingScreen.classList.remove('hidden');
+    }
+    
     // Update loadConversations and saveConversations to use the per-user key
     function loadConversations() {
       const key = getConvoStorageKey();
@@ -3809,6 +4021,14 @@
     } else {
       renderConversationList();
       switchConversation(currentConversationId);
+    }
+    
+    // Hide loading screen after initial conversations are loaded (if not logged in)
+    // If logged in, it will be hidden after fetchConversationsFromBackend completes
+    if (!currentUser) {
+      setTimeout(() => {
+        hideLoadingScreen();
+      }, 300);
     }
 
     // Add a function to show the ADA home section (blank welcome page)
@@ -4128,12 +4348,20 @@
         document.getElementById('mainApp').style.display = 'block';
         document.getElementById('aiTopbar').style.display = 'flex';
         
+        // Show loading screen while conversations load
+        showLoadingScreen();
+        
         // Update profile display
         updateProfileDisplay();
         
         // Load user-specific conversations
         loadConversations();
         renderConversationList();
+        
+        // Hide loading screen after conversations are loaded
+        setTimeout(() => {
+          hideLoadingScreen();
+        }, 300);
         
         // Focus on chat input
         setTimeout(() => {
@@ -4296,6 +4524,11 @@
               currentConversationId = null; // Force new chat on auto-login
               renderConversationList();
               
+              // Hide loading screen after conversations are loaded
+              setTimeout(() => {
+                hideLoadingScreen();
+              }, 300);
+              
               return true;
             } else if (responseText.toLowerCase().includes('invalid')) {
               // Token is invalid, clear only login cookies and show error
@@ -4311,6 +4544,10 @@
                 loginError.style.display = 'block';
                 loginError.textContent = 'Failed';
               }
+              // Hide loading screen
+              setTimeout(() => {
+                hideLoadingScreen();
+              }, 300);
               return false;
             } else {
               console.log('⚠️ Unexpected webhook response format - clearing login cookies');
@@ -4326,6 +4563,10 @@
                 loginError.style.display = 'block';
                 loginError.textContent = 'Failed';
               }
+              // Hide loading screen
+              setTimeout(() => {
+                hideLoadingScreen();
+              }, 300);
               return false;
             }
           } else {
@@ -4342,6 +4583,10 @@
               loginError.style.display = 'block';
               loginError.textContent = 'Failed';
             }
+            // Hide loading screen
+            setTimeout(() => {
+              hideLoadingScreen();
+            }, 300);
             return false;
           }
         } catch (error) {
@@ -4358,8 +4603,17 @@
             loginError.style.display = 'block';
             loginError.textContent = 'Failed';
           }
+          // Hide loading screen
+          setTimeout(() => {
+            hideLoadingScreen();
+          }, 300);
         }
       }
+      
+      // If no saved login, hide loading screen
+      setTimeout(() => {
+        hideLoadingScreen();
+      }, 300);
       
       return false;
     }
@@ -4398,6 +4652,11 @@
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('aiTopbar').style.display = 'none';
         
+        // Hide loading screen when showing login form
+        setTimeout(() => {
+          hideLoadingScreen();
+        }, 300);
+        
         setTimeout(() => {
           document.getElementById('loginUsername').focus();
         }, 100);
@@ -4406,9 +4665,25 @@
     
     // Call initialization immediately if DOM is already loaded
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', async () => await checkExistingLogin());
+      document.addEventListener('DOMContentLoaded', async () => {
+        const loginSuccessful = await checkExistingLogin();
+        if (!loginSuccessful) {
+          // Hide loading screen when showing login form
+          setTimeout(() => {
+            hideLoadingScreen();
+          }, 300);
+        }
+      });
     } else {
-      checkExistingLogin();
+      (async () => {
+        const loginSuccessful = await checkExistingLogin();
+        if (!loginSuccessful) {
+          // Hide loading screen when showing login form
+          setTimeout(() => {
+            hideLoadingScreen();
+          }, 300);
+        }
+      })();
     }
   </script>
   
