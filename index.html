@@ -2665,32 +2665,11 @@
 
     // Cookie management functions
     function saveSessionData() {
-      // Save all conversations for the user (for future extensibility)
-      let conversations = {};
-      // Try to load existing conversations from cookie
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        const idx = cookie.indexOf('=');
-        if (idx === -1) continue;
-        const name = cookie.slice(0, idx).trim();
-        const value = cookie.slice(idx + 1);
-        if (name === 'sessionData') {
-          try {
-            const sessionData = JSON.parse(decodeURIComponent(value));
-            if (sessionData.conversations) {
-              conversations = sessionData.conversations;
-            }
-          } catch {}
-        }
-      }
-      conversations[conversationId] = {
-        messages,
-        timestamp: Date.now()
-      };
+      // Save session data (excluding conversations - those are stored on backend via webhooks)
       const sessionData = {
         currentUser,
-        displayName,
-        conversations
+        displayName
+        // Conversations are not saved to cookies - only stored via webhooks
       };
       document.cookie = `sessionData=${encodeURIComponent(JSON.stringify(sessionData))}; path=/`;
     }
@@ -2708,18 +2687,7 @@
             if (!sessionData.currentUser) return false;
             currentUser = sessionData.currentUser;
             displayName = sessionData.displayName;
-            if (sessionData.conversations) {
-              // Don't restore last conversation - always start with new chat
-              // Just load the conversations data but don't switch to any specific conversation
-              conversations = sessionData.conversations;
-              currentConversationId = null;
-              conversationId = null;
-              messages = [];
-              // Update the conversation list to show "New Chat" selected
-              if (typeof renderConversationList === 'function') {
-                renderConversationList();
-              }
-            }
+            // Conversations are not loaded from cookies - they come from backend
             return true;
           } catch (err) {
             console.error('Error parsing session data');
@@ -2787,8 +2755,7 @@
           try {
             const sessionData = JSON.parse(decodeURIComponent(value));
             if (sessionData.currentUser) {
-              foundConversationId = sessionData.currentConversationId || null;
-              foundConversations = sessionData.conversations || null;
+              // Conversations are not loaded from cookies - they come from backend
             }
           } catch {}
         }
@@ -2801,12 +2768,9 @@
         var aiTopbar = document.getElementById('aiTopbar');
         if (aiTopbar) aiTopbar.style.display = '';
         updateProfileTopbar();
-        // Load conversations for this user
+        // Load conversations for this user (from localStorage, not cookies)
         loadConversations();
         // Always start with new chat on refresh
-        if (foundConversations) {
-          conversations = foundConversations;
-        }
         currentConversationId = null;
         renderConversationList();
         switchConversation(null);
