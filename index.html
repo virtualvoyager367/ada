@@ -3972,6 +3972,20 @@
     contextMenu.querySelector('#ctxDelete').addEventListener('click', function() {
       if (ctxTargetId && conversations[ctxTargetId]) {
         const wasActive = (currentConversationId === ctxTargetId);
+        
+        // Delete conversation from backend
+        fetch('https://n8n.tail851803.ts.net/webhook/fa3f4884-a5cf-4242-9224-055c716cf9ed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversationId: ctxTargetId
+          })
+        }).catch(error => {
+          console.error('Error deleting conversation from backend:', error);
+        });
+        
         delete conversations[ctxTargetId];
         saveConversations();
         // Remove any cookies for this conversation (if present)
