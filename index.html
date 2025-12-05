@@ -2941,36 +2941,31 @@
           } catch {}
         }
       }
-if (foundUser) {
+      if (foundUser) {
+        // Show loading screen at the start of auto-login
+        showLoadingScreen();
+        
         currentUser = foundUser;
         displayName = foundDisplayName;
         loginContainer.style.display = 'none';
-        mainApp.style.display = 'block';
+        mainApp.style.display = '';
         var aiTopbar = document.getElementById('aiTopbar');
-        if (aiTopbar) aiTopbar.style.display = 'flex';
+        if (aiTopbar) aiTopbar.style.display = '';
         updateProfileTopbar();
         
-        // Show loading screen before fetching conversations
-        showLoadingScreen();
-        
+        // Load conversations for this user (from localStorage, not cookies)
         try {
-          // Load conversations for this user (from localStorage, not cookies)
           await loadConversations();
-          
           // Always start with new chat on refresh
           currentConversationId = null;
           renderConversationList();
           await switchConversation(null);
           
-          // Wait 2.5 seconds after everything is loaded before hiding
+          // Wait for 2.5 seconds after everything is loaded before hiding the loading screen
           await new Promise(resolve => setTimeout(resolve, 2500));
-          
-          // Hide loading screen with fade out animation
-          hideLoadingScreen();
-          
         } catch (error) {
           console.error('Error during auto-login:', error);
-          // Still hide loading screen on error
+        } finally {
           hideLoadingScreen();
         }
       } else if (loadSessionData()) {
